@@ -9,4 +9,6 @@ App: http://bitbof.github.com/webchemy/
 
 Alchemy Homepage: http://al.chemy.org/
 
+Alchemy was initiated by Karl D.D. Willis & Jacob Hina.
+
 [![screen1](http://bitbof.github.com/webchemy/image01.jpg)](#)

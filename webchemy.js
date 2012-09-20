@@ -556,8 +556,8 @@ var Webchemy = (function () {
 	};
 	/*LIB.BezierLine
 	Figures out additional control points that create a fairly smooth and natural line in real time(as you add points)
-	add(x, y) add a point
-	getPoints() returns you all points with additional control points between them like this:
+	add(x, y)		add a point
+	getPoints()		returns you all points with additional control points between them like this:
 	[{x:, y: , c1: {x: , y: }, c2: {x: , y: }, c3: next}, next, ...]
 	The last element of the array doesn't have c1, c2 and c3
 	*/
@@ -1536,7 +1536,7 @@ var Webchemy = (function () {
 		});
 		backButton.innerHTML = "back";
 		logo.innerHTML = "Webchemy";
-		text.innerHTML = 'Webchemy is an attempt to recreate parts of Alchemy on the web, with support for mobile platforms like the iPad.<br/>by <a href="http://bitbof.com" target="_blank">bitbof</a> 2012' + '<br /><br />' + 'Alchemy was initiated by Karl D.D. Willis & Jacob Hina.' + '<br /><br />' + '<a href="https://github.com/bitbof/Webchemy" target="_blank">Webchemy Source Code (github)</a><br/>' + '<a href="http://al.chemy.org/" target="_blank">Alchemy Homepage</a>';
+		text.innerHTML = 'Webchemy is an attempt to recreate parts of Alchemy on the web, with support for mobile platforms like the iPad.<br/>by <a href="http://bitbof.com" target="_blank">bitbof</a> 2012' + '<br /><br />' + 'Alchemy was initiated by Karl D.D. Willis & Jacob Hina.' + '<br /><br />' + '<a href="https://github.com/bitbof/webchemy" target="_blank">Webchemy Source Code (github)</a><br/>' + '<a href="http://al.chemy.org/" target="_blank">Alchemy Homepage</a>';
 
 		function backClick() {
 			aboutCloseFunc();
@@ -2417,7 +2417,7 @@ var Webchemy = (function () {
 	*/
 	function WebchemyCanvasView(p) {
 		var keys, canvas, callback, width, height, zoom, translate, mode, div, canvasWrapper, cursor, cursorHandIm,
-			zoomWrapper, gestureHandler, MODE_DRAWING, MODE_HAND, CURSOR_CROSSHAIR, CURSOR_HAND;
+			zoomWrapper, gestureHandler, MODE_DRAWING, MODE_HAND, CURSOR_CROSSHAIR, CURSOR_HAND, drawing;
 		MODE_DRAWING = 0;
 		MODE_HAND = 1;
 		CURSOR_CROSSHAIR = 0;
@@ -2438,6 +2438,7 @@ var Webchemy = (function () {
 			x: 0,
 			y: 0
 		};
+		drawing = false;
 		mode = MODE_DRAWING;
 		div = document.createElement("div");
 		canvasWrapper = document.createElement("div");
@@ -2456,7 +2457,7 @@ var Webchemy = (function () {
 			if (cursor === CURSOR_CROSSHAIR) {
 				div.style.cursor = "crosshair";
 			}
-			if (cursor === CURSOR_HAND) {
+			if (cursor === CURSOR_HAND && cursorHandIm) {
 				div.style.cursor = "url(" + cursorHandIm + ") 10 10, move";
 			}
 		}
@@ -2643,6 +2644,12 @@ var Webchemy = (function () {
 			}
 			gestureHandler.add(val);
 			if (mode === MODE_HAND || val.code === 1 || keys.spacePressed) {
+				if (drawing) {
+					drawing = false;
+					callback({
+						dragdone: true
+					});
+				}
 				setCursor(CURSOR_HAND);
 				if (val.dragdone === false) {
 					translate.x += val.dX / zoom;
@@ -2655,14 +2662,24 @@ var Webchemy = (function () {
 					canvasSize = canvas.getSize();
 					x = canvasSize.width / 2 - (width / 2 - val.absX) / zoom - translate.x;
 					y = canvasSize.height / 2 - (height / 2 - val.absY) / zoom - translate.y;
-					callback({
-						x: x,
-						y: y,
-						down: val.down,
-						dragdone: false
-					});
+					if (val.down) {
+						drawing = true;
+						callback({
+							x: x,
+							y: y,
+							down: val.down,
+							dragdone: false
+						});
+					} else if (drawing) {
+						callback({
+							x: x,
+							y: y,
+							dragdone: false
+						});
+					}
 				}
-				if (val.dragdone === true && val.code === 0) {
+				if (val.dragdone === true && val.code === 0 && drawing) {
+					drawing = false;
 					callback({
 						dragdone: true
 					});

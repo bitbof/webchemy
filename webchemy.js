@@ -2663,6 +2663,12 @@ var Webchemy = (function () {
 					x = canvasSize.width / 2 - (width / 2 - val.absX) / zoom - translate.x;
 					y = canvasSize.height / 2 - (height / 2 - val.absY) / zoom - translate.y;
 					if (val.down) {
+						if (drawing) {
+							drawing = false;
+							callback({
+								dragdone: true
+							});
+						}
 						drawing = true;
 						callback({
 							x: x,
@@ -2678,7 +2684,7 @@ var Webchemy = (function () {
 						});
 					}
 				}
-				if (val.dragdone === true && val.code === 0 && drawing) {
+				if ((val.dragdone === true && val.code === 0 && drawing) || (val.code === 2 && drawing)) {
 					drawing = false;
 					callback({
 						dragdone: true

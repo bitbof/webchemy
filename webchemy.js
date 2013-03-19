@@ -762,119 +762,6 @@ var Webchemy = (function () {
             }
         }
     };
-    /*LIB.drawPathOnCanvas = function(pathObject, context) {
-		function parse(d) {
-			var result = [];
-			var path = d.split(" ");
-			var lastpos = [0, 0];
-			var i = 0;
-			var p = [0, 0], p1 = undefined, p2 = undefined, p3 = undefined; //temp pos
-			var mode = undefined;
-			while(i < path.length) {
-				if(path[i] === "m") {
-					p = path[i + 1].split(",");
-					lastpos[0] += parseFloat(p[0]);
-					lastpos[1] += parseFloat(p[1]);
-					result.push({
-						action: "moveTo",
-						p: [lastpos[0], lastpos[1]]
-					});
-					i += 2;
-					mode = undefined;
-				} else if(path[i] === "M") {
-					p = path[i + 1].split(",");
-					lastpos[0] = parseFloat(p[0]);
-					lastpos[1] = parseFloat(p[1]);
-					result.push({
-						action: "moveTo",
-						p: [lastpos[0], lastpos[1]]
-					});
-					i += 2;
-					mode = undefined;
-				} else if(path[i] === "c") {
-					mode = "curveRel";
-					i += 1;
-				} else if(path[i] === "l") {
-					mode = "linearRel";
-					i += 1;
-				} else if(path[i] === "C") {
-					mode = "curve";
-					i += 1;
-				} else if(path[i] === "L") {
-					mode = "linear";
-					i += 1;
-				} else if(path[i] === "z" || path[i] === "Z") {
-					result.push({
-						action: "closePath",
-						p: []
-					});
-					i += 1;
-					mode = undefined;
-				}
-				if(mode === "curveRel") {
-					p = path[i].split(",");
-					p1 = path[i + 1].split(",");
-					p2 = path[i + 2].split(",");
-					p[0] = lastpos[0] + parseFloat(p[0]);
-					p[1] = lastpos[1] + parseFloat(p[1]);
-					p1[0] = p[0] + parseFloat(p1[0]);
-					p1[1] = p[1] + parseFloat(p1[1]);
-					lastpos[0] = p1[0] + parseFloat(p2[0]);
-					lastpos[1] = p1[1] + parseFloat(p2[1]);
-					result.push({
-						action: "bezierCurveTo",
-						p: [p[0], p[1], p1[0], p1[1], lastpos[0], lastpos[1]]
-					});
-					i += 3;
-				} else if(mode === "linearRel") {
-					p = path[i].split(",");
-					lastpos[0] += parseFloat(p[0]);
-					lastpos[1] += parseFloat(p[1]);
-					result.push({
-						action: "lineTo",
-						p: [lastpos[0], lastpos[1]]
-					});
-					i += 1;
-				} else if(mode === "curve") {
-					p = path[i].split(",");
-					p1 = path[i + 1].split(",");
-					p2 = path[i + 2].split(",");
-					p[0] = parseFloat(p[0]);
-					p[1] = parseFloat(p[1]);
-					p1[0] = parseFloat(p1[0]);
-					p1[1] = parseFloat(p1[1]);
-					lastpos[0] = parseFloat(p2[0]);
-					lastpos[1] = parseFloat(p2[1]);
-					result.push({
-						action: "bezierCurveTo",
-						p: [p[0], p[1], p1[0], p1[1], lastpos[0], lastpos[1]]
-					});
-					i += 3;
-				} else if(mode === "linear") {
-					p = path[i].split(",");
-					lastpos[0] = parseFloat(p[0]);
-					lastpos[1] = parseFloat(p[1]);
-					result.push({
-						action: "lineTo",
-						p: [lastpos[0], lastpos[1]]
-					});
-					i += 1;
-				} else if(mode !== undefined) {
-				}
-			}
-			return result;
-		}
-		if (!pathObject.parsed) {
-			pathObject.parsed = parse(pathObject.d);
-			console.log(pathObject.parsed );
-		}
-		var path = pathObject.parsed;
-		context.beginPath();
-		for(var i = 0; i < path.length; i += 1) {
-			context[path[i].action].apply(context, path[i].p);
-		}
-		
-	};*/
     /*LIB.drawSVGToContext(p)
 	A non manual way of drawing SVG shapes onto a canvas. Should yield more accurate results since
 	the browser knows best how to draw SVG shapes.
@@ -5509,6 +5396,7 @@ var Webchemy = (function () {
                     mode.pop();
                 }
             }
+			scroll = parseInt(scroll, 10); //to prevent zooming when not scrolling enough
             if (scroll !== 0) {
                 if (!zoomTransition) {
                     zoomTransition = true;
@@ -6957,19 +6845,29 @@ var Webchemy = (function () {
                     view.reset();
                 }
                 if (val.exportSVG) {
-                    //var blob = new Blob([tools.getSVGString()], ["text/plain"]);
                     BB = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
                     bb = new BB();
                     bb.append(tools.getSVGString());
                     window.saveAs(bb.getBlob("text/plain"), "Webchemy.svg");
-                    //window.saveAs(blob, "Webchemy.svg");
                 }
                 if (val.exportPNG) {
                     if (window.chrome) {
                         finalim = tools.getCanvasImage();
-                        finalim.toBlob(function (blob) {
-                            window.saveAs(blob, "Webchemy.png");
-                        }, "image/png");
+						(function() {
+							var parts, binStr, buf, view, i, blob;
+							parts = finalim.toDataURL("image/png").match(/data:([^;]*)(;base64)?,([0-9A-Za-z+/]+)/);
+							binStr = atob(parts[3]);
+							buf = new ArrayBuffer(binStr.length);
+							view = new Uint8Array(buf);
+							for (i = 0; i < view.length; i += 1) {
+								view[i] = binStr.charCodeAt(i);
+							}
+							blob = new Blob([view], {'type': parts[1]});
+							saveAs(
+								blob
+								, "Webchemy.png"
+							);
+						}());
                     } else {
                         canvas = tools.getCanvasImage();
                         im = new Image();
